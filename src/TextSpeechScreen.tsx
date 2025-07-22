@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
@@ -37,6 +37,8 @@ const TextSpeechScreen: React.FC = () => {
   const [voiceId, setVoiceId] = useState(voices[0].id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleConvert = async () => {
     if (!apiKey) {
@@ -55,13 +57,27 @@ const TextSpeechScreen: React.FC = () => {
       const arrayBuffer = await streamToArrayBuffer(audioStream);
       const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
       const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+      // Play audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
       const audio = new Audio(url);
+      audioRef.current = audio;
       audio.play();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Error converting text to speech');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStop = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
   };
 
@@ -163,6 +179,27 @@ const TextSpeechScreen: React.FC = () => {
     fontSize: 16,
     boxShadow: '0 1px 4px 0 #e5393522',
   };
+  const actionRowStyle: React.CSSProperties = {
+    display: 'flex',
+    width: '100%',
+    gap: 16,
+    marginTop: 0,
+    justifyContent: 'center',
+  };
+  const smallButtonStyle: React.CSSProperties = {
+    flex: 1,
+    padding: '10px 0',
+    borderRadius: 10,
+    border: 'none',
+    background: 'linear-gradient(90deg, #a259c6 0%, #38c6d9 100%)',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: 16,
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px 0 #a259c633',
+    transition: 'background 0.2s, box-shadow 0.2s, opacity 0.2s',
+    opacity: audioUrl ? 1 : 0.7,
+  };
 
   return (
     <div style={outerStyle}>
@@ -194,6 +231,25 @@ const TextSpeechScreen: React.FC = () => {
         >
           {loading ? 'Converting...' : 'Convert & Play'}
         </button>
+        <div style={actionRowStyle}>
+          <button
+            style={smallButtonStyle}
+            onClick={handleStop}
+            disabled={!audioUrl}
+            type="button"
+          >
+            Stop
+          </button>
+          <a
+            href={audioUrl || '#'}
+            download="speech.mp3"
+            style={{ ...smallButtonStyle, textAlign: 'center', textDecoration: 'none', display: 'inline-block', lineHeight: '38px', pointerEvents: audioUrl ? 'auto' : 'none' }}
+            aria-disabled={!audioUrl}
+            tabIndex={audioUrl ? 0 : -1}
+          >
+            Download
+          </a>
+        </div>
         {error && <div style={errorStyle}>{error}</div>}
       </div>
     </div>
