@@ -66,7 +66,7 @@ const TextSpeechScreen: React.FC = () => {
   const [voiceId, setVoiceId] = useState(voices[0].id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recentPhrases, setRecentPhrases] = useState<string[]>([]);
   const utteranceRef = useRef<HTMLAudioElement | null>(null);
